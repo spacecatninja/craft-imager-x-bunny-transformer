@@ -1,0 +1,49 @@
+{
+    "name": "spacecatninja/imager-x-bunny-transformer",
+    "description": "Bunny.net transformer for Imager X",
+    "type": "craft-plugin",
+    "version": "1.0.0",
+    "license": "MIT",
+    "keywords": [
+        "craft",
+        "cms",
+        "craftcms",
+        "craft-plugin",
+        "image",
+        "responsive",
+        "transform",
+        "srcset",
+        "picture",
+        "bunny",
+        "bunny.net"
+    ],
+    "support": {
+        "docs": "https://github.com/spacecatninja/craft-imager-x-bunny-transformer/blob/master/README.md",
+        "issues": "https://github.com/spacecatninja/craft-imager-x-bunny-transformer/issues"
+    },
+    "authors": [
+        {
+            "name": "SPACECATNINJA",
+            "homepage": "https://www.spacecat.ninja"
+        }
+    ],
+    "require": {
+        "php": "^8.0",        
+        "craftcms/cms": "^4.0.0"
+    },
+    "autoload": {
+        "psr-4": {
+          "spacecatninja\\bunnytransformer\\": "src/"
+        }
+    },
+    "extra": {
+        "name": "Imager X Bunny.net Transformer",
+        "handle": "imager-x-bunny-transformer",
+        "schemaVersion": "1.0.0",
+        "hasCpSettings": false,
+        "hasCpSection": false,
+        "changelogUrl": "https://raw.githubusercontent.com/spacecatninja/craft-imager-x-bunny-transformer/master/CHANGELOG.md",
+        "components": {},
+        "class": "spacecatninja\\bunnytransformer\\BunnyTransformer"
+    }
+}

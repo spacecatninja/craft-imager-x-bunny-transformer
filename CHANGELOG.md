@@ -1,6 +1,6 @@
 # Bunny.net transformer for Imager X Changelog
 
-## 1.0.0 - 2024-07-19
+## 2.0.0 - 2024-07-19
 
 ### Added
-- Initial release
+- Initial Craft 5 release

@@ -78,6 +78,9 @@ Example profile:
             'moreimages' => 'more/images',            
         ],
         'useCloudSourcePath' => true,
+        'defaultParams' => [
+            'quality' => 70,
+        ],
     ],
     'myotherzone' => [
         'hostname' => 'my-other-zone.b-cdn.net',
@@ -85,7 +88,7 @@ Example profile:
 ],
 ```
 
-Each profile takes three settings:
+Each profile takes four settings:
 
 *hostname*: This is the Hostname for your zone.
 
@@ -95,7 +98,16 @@ one Bunny.net zone. If this setting is an array, the key should be the volume ha
 *useCloudSourcePath*: If enabled, Imager will prepend the Craft source path to the asset path, before adding it to the 
 Bunny.net path. This makes it possible to have one Bunny zone pulling images from many Craft volumes when they are for instance 
 on the same S3 bucket, but in different subfolder. This only works on volumes that implements a path 
-setting (AWS S3 and GCS does, local volumes does not).
+setting (AWS S3 and GCS does, local volumes does not).  
+
+*defaultParams*: An array of default parameters that you want passed to all of your Bunny transforms. Example:  
+```php
+'defaultParams' => [
+    'quality' => 70,
+    'saturation' => 110,
+]
+```
+💡 Any default parameter added to a profile can be overridden per-transform, via the `transformerParams` transform parameter.
 
 ### defaultProfile [string]
 Default: `''`  

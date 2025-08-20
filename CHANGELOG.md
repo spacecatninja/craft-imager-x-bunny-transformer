@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Fixed
+- Fixed a PHP 8.0 compatibility bug 
+
 ### Added
 - Added `defaultParams` config setting to profiles
 

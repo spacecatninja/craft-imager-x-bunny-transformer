@@ -172,16 +172,22 @@ class BunnyHelpers
         if ($transformRatio > $assetRatio) {
             $cropWidth = $imageWidth;
             $cropHeight = ceil($imageWidth / ($params['width'] / $params['height']));
-
-            $cropX = 0;
-            $cropY = floor(($imageHeight - $cropHeight) * ($top / 100));
         } else {
             $cropWidth = ceil($imageHeight / ($params['height'] / $params['width']));
             $cropHeight = $imageHeight;
-
-            $cropX = floor((($imageWidth - $cropWidth) * ($left / 100)));
-            $cropY = 0;
         }
+
+        // Calculate absolute pixels for the original focal point x and y
+        $focalX = floor($imageWidth * ($left / 100));
+        $focalY = floor($imageHeight * ($top / 100));
+
+        // Calculate absolute pixels for the crop origin x and y
+        $cropX = floor($focalX - ($cropWidth  / 2));
+        $cropY = floor($focalY - ($cropHeight / 2));
+
+        // Clamp the crop origin x and y to image bounds
+        $cropX = max(0, min($cropX, $imageWidth  - $cropWidth));
+        $cropY = max(0, min($cropY, $imageHeight - $cropHeight));
 
         return "$cropWidth,$cropHeight,$cropX,$cropY";
     }

@@ -89,7 +89,7 @@ class Bunny extends Component implements TransformerInterface
         $url = (!str_starts_with($profile->hostname, 'http') ? 'https://' : '') . rtrim($profile->hostname, '/') . '/' . $path; 
         
         // Get applicable params
-        $params = [...$transform, ...$transformerParams];
+        $params = [...$profile->defaultParams, ...$transform, ...$transformerParams];
         
         // get quality
         if (!isset($params['quality'])) {

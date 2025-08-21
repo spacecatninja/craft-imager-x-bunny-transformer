@@ -1,6 +1,10 @@
 # Bunny.net transformer for Imager X Changelog
 
 ## Unreleased
+
+### Added
+- Added `defaultParams` config setting to profiles
+
 ### Fixed
 - Fixed a bug where the crop position could be miscalculated
 

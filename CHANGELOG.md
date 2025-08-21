@@ -1,6 +1,6 @@
 # Bunny.net transformer for Imager X Changelog
 
-## Unreleased
+## 2.0.1 - 2025-08-21
 
 ### Added
 - Added `defaultParams` config setting to profiles

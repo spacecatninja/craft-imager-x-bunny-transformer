@@ -55,7 +55,7 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
         } else if (isset($transform['width']) || isset($transform['height'])) {
             if ($source !== null && $transform !== null) {
                 [$sourceWidth, $sourceHeight] = $this->getSourceImageDimensions($source);
-                [$w, $h] = $this->calculateTargetSize($transform, $sourceWidth ?? 1, $sourceHeight ?? 1);
+                [$w, $h] = $this->calculateTargetSize($transform, $sourceWidth ?: 1, $sourceHeight ?: 1);
 
                 $this->width = $w;
                 $this->height = $h;

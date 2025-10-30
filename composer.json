@@ -2,7 +2,7 @@
     "name": "spacecatninja/imager-x-bunny-transformer",
     "description": "Bunny.net transformer for Imager X",
     "type": "craft-plugin",
-    "version": "1.0.2",
+    "version": "0.0.1",
     "license": "MIT",
     "keywords": [
         "craft",
@@ -28,8 +28,8 @@
         }
     ],
     "require": {
-        "php": "^8.0",        
-        "craftcms/cms": "^4.0.0"
+        "php": "^7.4|^8.0",
+        "craftcms/cms": "^3.9.15"
     },
     "autoload": {
         "psr-4": {

@@ -12,8 +12,12 @@ use craft\base\Model;
 
 class BunnyProfile extends Model
 {
-    public string $hostname = '';
-    public array|string $addPath = [];
-    public bool $useCloudSourcePath = false;
-    public array $defaultParams = [];
+    /** @var string */
+    public $hostname = '';
+    /** @var array|string */
+    public $addPath = [];
+    /** @var bool */
+    public $useCloudSourcePath = false;
+    /** @var array */
+    public $defaultParams = [];
 }

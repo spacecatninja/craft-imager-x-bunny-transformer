@@ -22,7 +22,7 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
      * @param Asset|string|null  $source
      * @param array       $transform
      */
-    public function __construct(string $imageUrl = null, Asset|string $source = null, array $transform = [])
+    public function __construct(?string $imageUrl = null, $source = null, array $transform = [])
     {
         if ($imageUrl !== null) {
             $this->url = $imageUrl;
@@ -71,10 +71,9 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
 
     /**
      * @param Asset|string $source
-     *
      * @return array
      */
-    protected function getSourceImageDimensions(Asset|string $source): array
+    protected function getSourceImageDimensions($source): array
     {
         $imageWidth = 0;
         $imageHeight = 0;

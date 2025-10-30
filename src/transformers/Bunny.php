@@ -10,20 +10,20 @@ namespace spacecatninja\bunnytransformer\transformers;
 
 use craft\base\Component;
 use craft\elements\Asset;
-
 use craft\helpers\UrlHelper;
+
 use spacecatninja\bunnytransformer\BunnyTransformer;
 use spacecatninja\bunnytransformer\helpers\BunnyHelpers;
 use spacecatninja\bunnytransformer\models\BunnyTransformedImageModel;
 use spacecatninja\bunnytransformer\models\Settings;
-use spacecatninja\imagerx\services\ImagerService;
 use spacecatninja\imagerx\transformers\TransformerInterface;
 use spacecatninja\imagerx\exceptions\ImagerException;
 
 class Bunny extends Component implements TransformerInterface
 {
 
-    public static array $validParams = [
+    /** @var array */
+    public static $validParams = [
         'width',
         'height',
         'aspect_ratio',
@@ -52,7 +52,7 @@ class Bunny extends Component implements TransformerInterface
      *
      * @throws ImagerException
      */
-    public function transform(Asset|string $image, array $transforms): ?array
+    public function transform($image, $transforms): ?array
     {
         $transformedImages = [];
 
@@ -70,11 +70,10 @@ class Bunny extends Component implements TransformerInterface
      * @return BunnyTransformedImageModel
      * @throws ImagerException
      */
-    private function getTransformedImage(Asset|string $image, array $transform): BunnyTransformedImageModel
+    private function getTransformedImage($image, array $transform): BunnyTransformedImageModel
     {
         /** @var Settings $settings */
         $settings = BunnyTransformer::$plugin->getSettings();
-        $config = ImagerService::getConfig();
         $transformerParams = $transform['transformerParams'] ?? [];
 
         $profileName = $transformerParams['profile'] ?? $settings->defaultProfile;
@@ -86,7 +85,8 @@ class Bunny extends Component implements TransformerInterface
         
         $path = BunnyHelpers::getImagePath($image, $profile);
         
-        $url = (!str_starts_with($profile->hostname, 'http') ? 'https://' : '') . rtrim($profile->hostname, '/') . '/' . $path; 
+        $prefix = (strpos($profile->hostname, 'http') === 0 ? '' : 'https://');
+        $url = $prefix . rtrim($profile->hostname, '/') . '/' . $path; 
         
         // Get applicable params
         $params = array_merge($profile->defaultParams, $transform, $transformerParams);

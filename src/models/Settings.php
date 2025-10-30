@@ -12,6 +12,8 @@ use craft\base\Model;
 
 class Settings extends Model
 {
-    public string $defaultProfile = '';
-    public array $profiles = [];
+    /** @var string */
+    public $defaultProfile = '';
+    /** @var array */
+    public $profiles = [];
 }

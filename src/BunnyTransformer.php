@@ -22,7 +22,8 @@ class BunnyTransformer extends Plugin
     // Static Properties
     // =========================================================================
 
-    public static BunnyTransformer $plugin;
+    /** @var BunnyTransformer */
+    public static $plugin;
 
     // Public Methods
     // =========================================================================

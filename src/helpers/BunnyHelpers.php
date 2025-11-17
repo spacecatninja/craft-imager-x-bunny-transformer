@@ -12,6 +12,7 @@ use craft\elements\Asset;
 use craft\helpers\App;
 use craft\helpers\FileHelper;
 
+use craft\volumes\Local;
 use spacecatninja\bunnytransformer\BunnyTransformer;
 use spacecatninja\bunnytransformer\models\BunnyProfile;
 use spacecatninja\imagerx\exceptions\ImagerException;
@@ -125,24 +126,24 @@ class BunnyHelpers
     /**
      * Creates the crop parameter string
      *
-     * @param Asset|string $image
+     * @param $image
      * @param array $params
      * @return string
+     * @throws InvalidConfigException
      */
     public static function getCropParamValue($image, array $params): string
     {
         $imageWidth = 0;
         $imageHeight = 0;
 
-        if (is_string($image)) {
-            $imageInfo = @getimagesize(App::parseEnv('@webroot/'.ltrim($image, '/')));
-
-            if (\is_array($imageInfo) && $imageInfo[0] !== '' && $imageInfo[1] !== '') {
-                [$imageWidth, $imageHeight] = $imageInfo;
-            }
-        } else {
-            $imageWidth = $image->width;
-            $imageHeight = $image->height;
+        // Attempt to get width and height from the file on disk
+        $imageInfo = self::getImageSize($image);
+        if (!empty($imageInfo)) {
+            [$imageWidth, $imageHeight] = $imageInfo;
+        } else if ($image instanceof Asset) {
+            // Fall back to width and height from the database for assets
+            $imageWidth = $image->width ?? 0;
+            $imageHeight = $image->height ?? 0;
         }
 
         if ($imageWidth === 0 || $imageHeight === 0) {
@@ -187,6 +188,28 @@ class BunnyHelpers
         $cropY = max(0, min($cropY, $imageHeight - $cropHeight));
 
         return "$cropWidth,$cropHeight,$cropX,$cropY";
+    }
+
+    /**
+     * @param $image
+     * @return array|null
+     * @throws InvalidConfigException
+     */
+    private static function getImageSize($image): ?array
+    {
+        if ($image instanceof Asset && $image->getVolume() instanceof Local) {
+            $imagePath = App::parseEnv(rtrim($image->getVolume()->path ?? '', '/') . DIRECTORY_SEPARATOR . rtrim($image->path, '/'));
+        } else if (is_string($image)) {
+            $imagePath = App::parseEnv('@webroot/'.ltrim($image, '/'));
+        } else {
+            return null;
+        }
+        $imageInfo = @getimagesize($imagePath);
+        if (!is_array($imageInfo) || empty($imageInfo[0]) || empty($imageInfo[1])) {
+            return null;
+        }
+
+        return $imageInfo;
     }
 
 }

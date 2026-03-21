@@ -115,7 +115,7 @@ the top-level `apiKey` setting. See [Purging](#purging) below.
 *excludeFromPurge*: Set to `true` to exclude this profile from cache purging. Default is `false`.
 
 ### defaultProfile [string]
-Default: `''`
+Default: `''`  
 Sets the default profile to use (see `profiles`). You can override profile at the transform level by setting it through the `transformParams` transform parameter. Example:
 
 ```
@@ -126,18 +126,18 @@ Sets the default profile to use (see `profiles`). You can override profile at th
 ```
 
 ### apiKey [string]
-Default: `''`
+Default: `''`  
 A global Bunny.net API key used for cache purging across all profiles. Can be overridden per-profile using the
 `apiKey` profile setting. See [Purging](#purging) below.
 
 ### autoPurge [bool]
-Default: `false`
+Default: `false`  
 When enabled, assets are automatically purged from the Bunny CDN cache when they are replaced, deleted, or
 moved in Craft. Requires at least one profile to have a valid API key (either via the top-level `apiKey`
 setting or the profile's own `apiKey`).
 
 ### purgeElementAction [bool]
-Default: `true`
+Default: `true`  
 When enabled, a "Purge from Bunny" action is added to the asset index element actions menu, allowing
 editors to manually purge selected images from the Bunny CDN cache. Requires at least one profile to
 have a valid API key.

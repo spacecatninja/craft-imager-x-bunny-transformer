@@ -1,5 +1,10 @@
 # Bunny.net transformer for Imager X Changelog
 
+## 2.1.0 - 2026-03-21
+
+### Added
+- Added purging of transforms via the Bunny API.
+
 ## 2.0.2 - 2025-09-01
 
 ### Fixed

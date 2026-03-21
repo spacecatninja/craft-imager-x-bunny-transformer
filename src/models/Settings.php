@@ -14,4 +14,7 @@ class Settings extends Model
 {
     public string $defaultProfile = '';
     public array $profiles = [];
+    public string $apiKey = '';
+    public bool $autoPurge = false;
+    public bool $purgeElementAction = true;
 }

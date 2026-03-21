@@ -16,4 +16,6 @@ class BunnyProfile extends Model
     public array|string $addPath = [];
     public bool $useCloudSourcePath = false;
     public array $defaultParams = [];
+    public string $apiKey = '';
+    public bool $excludeFromPurge = false;
 }

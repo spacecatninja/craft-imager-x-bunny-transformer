@@ -88,19 +88,19 @@ Example profile:
 ],
 ```
 
-Each profile takes four settings:
+Each profile takes the following settings:
 
 *hostname*: This is the Hostname for your zone.
 
-*addPath*: Prepends a path to the asset's path. Can be useful if you have several volumes that you want to serve with 
+*addPath*: Prepends a path to the asset's path. Can be useful if you have several volumes that you want to serve with
 one Bunny.net zone. If this setting is an array, the key should be the volume handle, and the value the path to add. See example above.
 
-*useCloudSourcePath*: If enabled, Imager will prepend the Craft source path to the asset path, before adding it to the 
-Bunny.net path. This makes it possible to have one Bunny zone pulling images from many Craft volumes when they are for instance 
-on the same S3 bucket, but in different subfolder. This only works on volumes that implements a path 
-setting (AWS S3 and GCS does, local volumes does not).  
+*useCloudSourcePath*: If enabled, Imager will prepend the Craft source path to the asset path, before adding it to the
+Bunny.net path. This makes it possible to have one Bunny zone pulling images from many Craft volumes when they are for instance
+on the same S3 bucket, but in different subfolder. This only works on volumes that implements a path
+setting (AWS S3 and GCS does, local volumes does not).
 
-*defaultParams*: An array of default parameters that you want passed to all of your Bunny transforms. Example:  
+*defaultParams*: An array of default parameters that you want passed to all of your Bunny transforms. Example:
 ```php
 'defaultParams' => [
     'quality' => 70,
@@ -109,20 +109,77 @@ setting (AWS S3 and GCS does, local volumes does not).
 ```
 💡 Any default parameter added to a profile can be overridden per-transform, via the `transformerParams` transform parameter.
 
+*apiKey*: A Bunny.net API key for this specific profile, used for cache purging. If set, it takes precedence over
+the top-level `apiKey` setting. See [Purging](#purging) below.
+
+*excludeFromPurge*: Set to `true` to exclude this profile from cache purging. Default is `false`.
+
 ### defaultProfile [string]
-Default: `''`  
+Default: `''`
 Sets the default profile to use (see `profiles`). You can override profile at the transform level by setting it through the `transformParams` transform parameter. Example:
 
 ```
-{% set transforms = craft.imagerx.transformImage(asset, 
-    [{width: 800}, {width: 2000}], 
+{% set transforms = craft.imagerx.transformImage(asset,
+    [{width: 800}, {width: 2000}],
     { transformerParams: { profile: 'myotherprofile' } }
 ) %}
+```
+
+### apiKey [string]
+Default: `''`
+A global Bunny.net API key used for cache purging across all profiles. Can be overridden per-profile using the
+`apiKey` profile setting. See [Purging](#purging) below.
+
+### autoPurge [bool]
+Default: `false`
+When enabled, assets are automatically purged from the Bunny CDN cache when they are replaced, deleted, or
+moved in Craft. Requires at least one profile to have a valid API key (either via the top-level `apiKey`
+setting or the profile's own `apiKey`).
+
+### purgeElementAction [bool]
+Default: `true`
+When enabled, a "Purge from Bunny" action is added to the asset index element actions menu, allowing
+editors to manually purge selected images from the Bunny CDN cache. Requires at least one profile to
+have a valid API key.
+
+
+## Purging
+
+The plugin supports purging assets from the Bunny CDN cache in two ways:
+
+**Automatic purging** — enabled via the `autoPurge` config setting. When active, assets are purged
+automatically when replaced, deleted, or moved in Craft (the latter requires
+[`removeTransformsOnAssetFileops`](https://imager-x.spacecat.ninja/configuration.html#removetransformsonassetfileops)
+to be enabled in your Imager X config).
+
+**Manual purging via element action** — enabled via the `purgeElementAction` config setting (on by default).
+Adds a "Purge from Bunny" option to the actions menu in the asset index, letting editors selectively
+purge images on demand.
+
+To enable purging, you need a [Bunny.net API key](https://support.bunny.net/hc/en-us/articles/360012168840).
+Set it globally via the top-level `apiKey` config setting, or per-profile using the `apiKey` profile setting.
+Profiles can be excluded from purging individually using `excludeFromPurge`.
+
+A minimal purge-enabled config looks like this:
+
+```php
+<?php
+
+return [
+    'defaultProfile' => 'default',
+    'apiKey' => 'your-bunny-api-key',
+    'autoPurge' => true,
+    'profiles' => [
+        'default' => [
+            'hostname' => 'my-zone.b-cdn.net',
+        ],
+    ],
+];
 ```
 
 
 Price, license and support
 ---
-The plugin is released under the MIT license. It requires Imager X, which is a commercial 
-plugin [available in the Craft plugin store](https://plugins.craftcms.com/imager-x). If you 
-need help, or found a bug, please post an issue in this repo, or in Imager X' repo (preferably). 
+The plugin is released under the MIT license. It requires Imager X, which is a commercial
+plugin [available in the Craft plugin store](https://plugins.craftcms.com/imager-x). If you
+need help, or found a bug, please post an issue in this repo, or in Imager X' repo (preferably).

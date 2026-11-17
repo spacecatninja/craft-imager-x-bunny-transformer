@@ -3,14 +3,17 @@
  * Bunny.net transformer for Imager X
  *
  * @link      https://www.spacecat.ninja
- * @copyright Copyright (c) 2024 André Elvan
+ * @copyright Copyright (c) 2026 André Elvan
  */
 
 namespace SpaceCatNinja\BunnyTransformer\Data;
 
-use craft\base\Model;
+use CraftCms\Cms\Component\Component;
 
-class BunnyProfile extends Model
+/**
+ * The config of one Bunny.net profile, from the `profiles` setting.
+ */
+class BunnyProfile extends Component
 {
     public string $hostname = '';
     public array|string $addPath = [];

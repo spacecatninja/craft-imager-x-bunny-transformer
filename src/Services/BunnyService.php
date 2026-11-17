@@ -3,31 +3,29 @@
  * Bunny.net transformer for Imager X
  *
  * @link      https://www.spacecat.ninja
- * @copyright Copyright (c) 2024 André Elvan
+ * @copyright Copyright (c) 2026 André Elvan
  */
 
 namespace SpaceCatNinja\BunnyTransformer\Services;
 
-use Craft;
-use craft\base\Component;
-use craft\elements\Asset;
-
-use SpaceCatNinja\BunnyTransformer\Support\BunnyHelpers;
+use CraftCms\Cms\Asset\Elements\Asset;
+use Illuminate\Container\Attributes\Singleton;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use SpaceCatNinja\BunnyTransformer\Data\BunnyProfile;
 use SpaceCatNinja\BunnyTransformer\Settings;
-use spacecatninja\imagerx\exceptions\ImagerException;
+use SpaceCatNinja\BunnyTransformer\Support\BunnyHelpers;
+use SpaceCatNinja\ImagerX\Exceptions\ImagerException;
 
-class BunnyService extends Component
+use function CraftCms\Cms\t;
+
+#[Singleton]
+class BunnyService
 {
     /**
      * @var string
      */
     public const PURGE_ENDPOINT = 'https://api.bunny.net/purge';
-
-    /**
-     * @var bool|null If purging is enabled or not
-     */
-    protected static ?bool $canPurge = null;
 
     /**
      * Purging is possible if there's a `profiles` map, and at least one profile
@@ -36,36 +34,28 @@ class BunnyService extends Component
      */
     public static function getCanPurge(): bool
     {
-        if (self::$canPurge === null) {
-            /** @var \SpaceCatNinja\BunnyTransformer\BunnyTransformer $plugin */
-            $plugin = \SpaceCatNinja\BunnyTransformer\BunnyTransformer::$plugin;
-            /** @var Settings $settings */
-            $settings = $plugin->getSettings();
+        $settings = app(Settings::class);
+        $profilesArr = $settings->profiles;
 
-            $profilesArr = $settings->profiles;
-            if (empty($profilesArr)) {
-                self::$canPurge = false;
-                return false;
-            }
-
-            $globalApiKey = $settings->apiKey;
-            $hasPurgableProfile = false;
-
-            foreach ($profilesArr as $profileConfig) {
-                $profile = new BunnyProfile($profileConfig);
-                if ($profile->excludeFromPurge) {
-                    continue;
-                }
-                if ($profile->apiKey || $globalApiKey) {
-                    $hasPurgableProfile = true;
-                    break;
-                }
-            }
-
-            self::$canPurge = $hasPurgableProfile;
+        if (empty($profilesArr)) {
+            return false;
         }
 
-        return self::$canPurge;
+        $globalApiKey = $settings->apiKey;
+
+        foreach ($profilesArr as $profileConfig) {
+            $profile = new BunnyProfile($profileConfig);
+
+            if ($profile->excludeFromPurge) {
+                continue;
+            }
+
+            if ($profile->apiKey || $globalApiKey) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -77,38 +67,24 @@ class BunnyService extends Component
     public function purgeUrlFromBunny(string $url, string $apiKey): void
     {
         try {
-            $endpoint = self::PURGE_ENDPOINT . '?' . http_build_query(['url' => $url, 'async' => 'false']);
+            $response = Http::withHeaders(['AccessKey' => $apiKey])
+                ->timeout(30)
+                ->withQueryParameters(['url' => $url, 'async' => 'false'])
+                ->send('POST', self::PURGE_ENDPOINT);
 
-            $curl = curl_init($endpoint);
-
-            $opts = [
-                CURLOPT_HTTPHEADER => ['AccessKey: ' . $apiKey],
-                CURLOPT_POST => 1,
-                CURLOPT_POSTFIELDS => '',
-                CURLOPT_TIMEOUT => 30,
-                CURLOPT_RETURNTRANSFER => true,
-            ];
-
-            curl_setopt_array($curl, $opts);
-
-            $response = curl_exec($curl);
-            $curlErrorNo = curl_errno($curl);
-            $curlError = curl_error($curl);
-            $httpStatus = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            curl_close($curl);
-
-            if ($curlErrorNo !== 0) {
-                $msg = Craft::t('imager-x-bunny-transformer', 'A cURL error "{curlErrorNo}" encountered while attempting to purge image "{url}". The error was: "{curlError}"', ['url' => $url, 'curlErrorNo' => $curlErrorNo, 'curlError' => $curlError]);
-                Craft::error($msg, __METHOD__);
-            }
-
-            if ($httpStatus !== 200) {
-                $msg = Craft::t('imager-x-bunny-transformer', 'An error occured when trying to purge "{url}", status was "{httpStatus}" and response was "{response}"', ['url' => $url, 'httpStatus' => $httpStatus, 'response' => $response]);
-                Craft::error($msg, __METHOD__);
+            if ($response->status() !== 200) {
+                Log::error(t('An error occurred when trying to purge "{url}", status was "{httpStatus}" and response was "{response}"', [
+                    'url' => $url,
+                    'httpStatus' => $response->status(),
+                    'response' => $response->body(),
+                ], 'imager-x-bunny-transformer'));
             }
         } catch (\Throwable $throwable) {
-            Craft::error($throwable->getMessage(), __METHOD__);
             // We don't continue to throw this error, since it could be caused by a duplicated request.
+            Log::error(t('An error was encountered while attempting to purge image "{url}". The error was: "{error}"', [
+                'url' => $url,
+                'error' => $throwable->getMessage(),
+            ], 'imager-x-bunny-transformer'));
         }
     }
 
@@ -120,17 +96,13 @@ class BunnyService extends Component
      */
     public function purgeAssetFromBunny(Asset $asset): void
     {
-        /** @var \SpaceCatNinja\BunnyTransformer\BunnyTransformer $plugin */
-        $plugin = \SpaceCatNinja\BunnyTransformer\BunnyTransformer::$plugin;
-        /** @var Settings $settings */
-        $settings = $plugin->getSettings();
-
+        $settings = app(Settings::class);
         $globalApiKey = $settings->apiKey;
         $profilesArr = $settings->profiles;
 
         if (empty($profilesArr)) {
-            $msg = Craft::t('imager-x-bunny-transformer', 'The `profiles` config setting is missing, or is not correctly set up.');
-            Craft::error($msg, __METHOD__);
+            $msg = t('The `profiles` config setting is missing, or is not correctly set up.', category: 'imager-x-bunny-transformer');
+            Log::error($msg);
             throw new ImagerException($msg);
         }
 
@@ -142,6 +114,7 @@ class BunnyService extends Component
             }
 
             $apiKey = $profile->apiKey ?: $globalApiKey;
+
             if (!$apiKey) {
                 continue;
             }
@@ -152,7 +125,7 @@ class BunnyService extends Component
 
                 $this->purgeUrlFromBunny($baseUrl, $apiKey);
             } catch (\Throwable $throwable) {
-                Craft::error($throwable->getMessage(), __METHOD__);
+                Log::error($throwable->getMessage());
                 throw new ImagerException($throwable->getMessage(), $throwable->getCode(), $throwable);
             }
         }

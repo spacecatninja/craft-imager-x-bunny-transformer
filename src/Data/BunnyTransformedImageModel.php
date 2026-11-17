@@ -3,27 +3,27 @@
  * Bunny.net transformer for Imager X
  *
  * @link      https://www.spacecat.ninja
- * @copyright Copyright (c) 2024 André Elvan
+ * @copyright Copyright (c) 2026 André Elvan
  */
 
 namespace SpaceCatNinja\BunnyTransformer\Data;
 
-use craft\elements\Asset;
-use craft\helpers\App;
-use spacecatninja\imagerx\models\BaseTransformedImageModel;
-use spacecatninja\imagerx\models\TransformedImageInterface;
+use CraftCms\Cms\Asset\Elements\Asset;
+use CraftCms\Cms\Support\Env;
+use SpaceCatNinja\ImagerX\Data\BaseTransformedImageModel;
+use SpaceCatNinja\ImagerX\Data\TransformedImageInterface;
 
 class BunnyTransformedImageModel extends BaseTransformedImageModel implements TransformedImageInterface
 {
     /**
-     * ImgixTransformedImageModel constructor.
-     *
-     * @param string|null $imageUrl
-     * @param Asset|string|null  $source
-     * @param array       $transform
+     * @param string|null       $imageUrl
+     * @param Asset|string|null $source
+     * @param array             $transform
      */
-    public function __construct(string $imageUrl = null, Asset|string $source = null, array $transform = [])
+    public function __construct(?string $imageUrl = null, Asset|string|null $source = null, array $transform = [])
     {
+        $this->source = $source;
+
         if ($imageUrl !== null) {
             $this->url = $imageUrl;
         }
@@ -53,7 +53,7 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
                 }
             }
         } else if (isset($transform['width']) || isset($transform['height'])) {
-            if ($source !== null && $transform !== null) {
+            if ($source !== null) {
                 [$sourceWidth, $sourceHeight] = $this->getSourceImageDimensions($source);
                 [$w, $h] = $this->calculateTargetSize($transform, $sourceWidth ?: 1, $sourceHeight ?: 1);
 
@@ -63,7 +63,7 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
         } else {
             // Neither is set, image is not resized. Just get dimensions and return.
             [$sourceWidth, $sourceHeight] = $this->getSourceImageDimensions($source);
-    
+
             $this->width = $sourceWidth;
             $this->height = $sourceHeight;
         }
@@ -80,16 +80,16 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
         $imageHeight = 0;
 
         if (is_string($source)) {
-            $imageInfo = @getimagesize(App::parseEnv('@webroot/'.ltrim($source, '/')));
+            $imageInfo = @getimagesize(Env::parse('@webroot/'.ltrim($source, '/')));
 
             if (\is_array($imageInfo) && $imageInfo[0] !== '' && $imageInfo[1] !== '') {
                 [$imageWidth, $imageHeight] = $imageInfo;
             }
         } else {
-            $imageWidth = $source->width;
-            $imageHeight = $source->height;
+            $imageWidth = (int)$source->getWidth();
+            $imageHeight = (int)$source->getHeight();
         }
-        
+
         return [$imageWidth, $imageHeight];
     }
 

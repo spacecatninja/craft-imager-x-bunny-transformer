@@ -3,21 +3,20 @@
  * Bunny.net transformer for Imager X
  *
  * @link      https://www.spacecat.ninja
- * @copyright Copyright (c) 2024 André Elvan
+ * @copyright Copyright (c) 2026 André Elvan
  */
 
 namespace SpaceCatNinja\BunnyTransformer\Support;
 
-use craft\elements\Asset;
-use craft\fs\Local;
-use craft\helpers\App;
-use SpaceCatNinja\BunnyTransformer\BunnyTransformer;
+use CraftCms\Cms\Asset\Elements\Asset;
+use CraftCms\Cms\Support\Env;
+use CraftCms\Cms\Support\File;
+use Illuminate\Filesystem\LocalFilesystemAdapter;
+use Illuminate\Support\Facades\Log;
 use SpaceCatNinja\BunnyTransformer\Data\BunnyProfile;
-use spacecatninja\imagerx\exceptions\ImagerException;
-use spacecatninja\imagerx\helpers\FileHelper;
-use spacecatninja\imagerx\models\ConfigModel;
-use spacecatninja\imagerx\services\ImagerService;
-use yii\base\InvalidConfigException;
+use SpaceCatNinja\BunnyTransformer\Settings;
+use SpaceCatNinja\ImagerX\Exceptions\ImagerException;
+use SpaceCatNinja\ImagerX\Services\ImagerService;
 
 class BunnyHelpers
 {
@@ -28,9 +27,9 @@ class BunnyHelpers
      */
     public static function getProfile(string $name): ?BunnyProfile
     {
-        $settings = BunnyTransformer::$plugin->getSettings();
+        $settings = app(Settings::class);
 
-        if ($settings && isset($settings->profiles[$name])) {
+        if (isset($settings->profiles[$name])) {
             return new BunnyProfile($settings->profiles[$name]);
         }
 
@@ -38,37 +37,37 @@ class BunnyHelpers
     }
 
     /**
-     * @param \craft\elements\Asset|string                        $image
-     * @param \SpaceCatNinja\BunnyTransformer\Data\BunnyProfile $profile
+     * Returns the path of an image in the pull zone.
+     *
+     * @param Asset|string $image
+     * @param BunnyProfile $profile
      *
      * @return string
-     * @throws \spacecatninja\imagerx\exceptions\ImagerException
+     * @throws ImagerException
      */
     public static function getImagePath(Asset|string $image, BunnyProfile $profile): string
     {
         if (is_string($image)) {
-            // assume this is a direct path inside the pul zone
+            // assume this is a direct path inside the pull zone
             return ltrim($image, '/');
         }
 
         try {
             $volume = $image->getVolume();
-            $fs = $image->getVolume()->getFs();
-        } catch (InvalidConfigException $invalidConfigException) {
-            \Craft::error($invalidConfigException->getMessage(), __METHOD__);
-            throw new ImagerException($invalidConfigException->getMessage(), $invalidConfigException->getCode(), $invalidConfigException);
+            $disk = $volume->sourceDisk();
+        } catch (\Throwable $throwable) {
+            Log::error($throwable->getMessage());
+            throw new ImagerException($throwable->getMessage(), $throwable->getCode(), $throwable);
         }
 
         $urlSegments = [];
 
-        // Add cloud source path if applicable
-        if ($profile->useCloudSourcePath) {
-            try {
-                if (property_exists($fs, 'subfolder') && $fs->subfolder !== '' && $fs::class !== Local::class) {
-                    $urlSegments[] = App::parseEnv($fs->subfolder);
-                }
-            } catch (\Throwable) {
+        // Add cloud source path if applicable: the disk's root, and the volume's subpath
+        if ($profile->useCloudSourcePath && !$disk instanceof LocalFilesystemAdapter) {
+            $cloudSourcePath = trim($disk->path(''), '/');
 
+            if ($cloudSourcePath !== '') {
+                $urlSegments[] = $cloudSourcePath;
             }
         }
 
@@ -84,24 +83,23 @@ class BunnyHelpers
         }
 
         // Add file path
-        $urlSegments[] = $image->path;
+        $urlSegments[] = $image->getPath();
 
-        return FileHelper::normalizePath(implode('/', $urlSegments), '/');
+        return File::normalizePath(implode('/', $urlSegments), '/');
     }
 
     /**
      * Gets the quality setting based on the extension.
      *
-     * @param \craft\elements\Asset|string $image
-     * @param array|null                   $transform
+     * @param Asset|string $image
+     * @param array|null   $transform
      *
      * @return string
      */
-    public static function getQualityFromExtension(Asset|string $image, array $transform = null): string
+    public static function getQualityFromExtension(Asset|string $image, ?array $transform = null): string
     {
-        /** @var ConfigModel $settings */
         $config = ImagerService::getConfig();
-        
+
         if (is_string($image)) {
             $ext = pathinfo($image, PATHINFO_EXTENSION);
         } else {
@@ -127,8 +125,8 @@ class BunnyHelpers
     /**
      * Creates the crop parameter string
      *
-     * @param \craft\elements\Asset|string $image
-     * @param array                        $params
+     * @param Asset|string $image
+     * @param array        $params
      *
      * @return string
      */
@@ -138,14 +136,14 @@ class BunnyHelpers
         $imageHeight = 0;
 
         if (is_string($image)) {
-            $imageInfo = @getimagesize(App::parseEnv('@webroot/'.ltrim($image, '/')));
+            $imageInfo = @getimagesize(Env::parse('@webroot/'.ltrim($image, '/')));
 
             if (\is_array($imageInfo) && $imageInfo[0] !== '' && $imageInfo[1] !== '') {
                 [$imageWidth, $imageHeight] = $imageInfo;
             }
         } else {
-            $imageWidth = $image->width;
-            $imageHeight = $image->height;
+            $imageWidth = (int)$image->getWidth();
+            $imageHeight = (int)$image->getHeight();
         }
 
         if ($imageWidth === 0 || $imageHeight === 0) {

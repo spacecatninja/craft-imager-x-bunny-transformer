@@ -3,15 +3,19 @@
  * Bunny.net transformer for Imager X
  *
  * @link      https://www.spacecat.ninja
- * @copyright Copyright (c) 2024 André Elvan
+ * @copyright Copyright (c) 2026 André Elvan
  */
 
 namespace SpaceCatNinja\BunnyTransformer\ElementActions;
 
-use Craft;
-use craft\base\ElementAction;
-use craft\elements\db\ElementQueryInterface;
-use SpaceCatNinja\BunnyTransformer\BunnyTransformer as Plugin;
+use CraftCms\Cms\Asset\Elements\Asset;
+use CraftCms\Cms\Element\Actions\ElementAction;
+use CraftCms\Cms\Element\Queries\Contracts\ElementQueryInterface;
+use Illuminate\Support\Facades\Gate;
+use SpaceCatNinja\BunnyTransformer\Services\BunnyService;
+
+use function CraftCms\Cms\currentUser;
+use function CraftCms\Cms\t;
 
 class BunnyPurgeElementAction extends ElementAction
 {
@@ -20,7 +24,7 @@ class BunnyPurgeElementAction extends ElementAction
      */
     public function getTriggerLabel(): string
     {
-        return Craft::t('imager-x-bunny-transformer', 'Purge from Bunny');
+        return t('Purge from Bunny', category: 'imager-x-bunny-transformer');
     }
 
     /**
@@ -28,33 +32,40 @@ class BunnyPurgeElementAction extends ElementAction
      */
     public function performAction(ElementQueryInterface $query): bool
     {
-        $imagesToPurge = $query->kind('image')->all();
+        $user = currentUser();
+
+        // Only act on images the current user can view
+        $imagesToPurge = array_filter(
+            $query->kind('image')->all(),
+            static fn($asset) => $asset instanceof Asset && $user !== null && Gate::forUser($user)->check('view', $asset),
+        );
 
         if (empty($imagesToPurge)) {
-            $this->setMessage(Craft::t('imager-x-bunny-transformer', 'No images to purge'));
+            $this->setMessage(t('No images to purge', category: 'imager-x-bunny-transformer'));
             return true;
         }
 
-        $bunnyPlugin = Plugin::$plugin;
-
         try {
             foreach ($imagesToPurge as $imageToPurge) {
-                $bunnyPlugin->bunny->purgeAssetFromBunny($imageToPurge);
+                app(BunnyService::class)->purgeAssetFromBunny($imageToPurge);
             }
         } catch (\Throwable $throwable) {
             $this->setMessage($throwable->getMessage());
             return false;
         }
 
-        $numImagesToPurge = is_countable($imagesToPurge) ? \count($imagesToPurge) : 0;
+        $numImagesToPurge = \count($imagesToPurge);
+
         if ($numImagesToPurge > 1) {
-            $this->setMessage(Craft::t('imager-x-bunny-transformer', 'Purging {count} images from Bunny...', [
+            $this->setMessage(t('Purging {count} images from Bunny...', [
                 'count' => $numImagesToPurge,
-            ]));
+            ], 'imager-x-bunny-transformer'));
+
             return true;
         }
 
-        $this->setMessage(Craft::t('imager-x-bunny-transformer', 'Purging image from Bunny...'));
+        $this->setMessage(t('Purging image from Bunny...', category: 'imager-x-bunny-transformer'));
+
         return true;
     }
 }

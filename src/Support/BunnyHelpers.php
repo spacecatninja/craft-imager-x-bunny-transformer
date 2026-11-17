@@ -6,13 +6,13 @@
  * @copyright Copyright (c) 2024 André Elvan
  */
 
-namespace spacecatninja\bunnytransformer\helpers;
+namespace SpaceCatNinja\BunnyTransformer\Support;
 
 use craft\elements\Asset;
 use craft\fs\Local;
 use craft\helpers\App;
-use spacecatninja\bunnytransformer\BunnyTransformer;
-use spacecatninja\bunnytransformer\models\BunnyProfile;
+use SpaceCatNinja\BunnyTransformer\BunnyTransformer;
+use SpaceCatNinja\BunnyTransformer\Data\BunnyProfile;
 use spacecatninja\imagerx\exceptions\ImagerException;
 use spacecatninja\imagerx\helpers\FileHelper;
 use spacecatninja\imagerx\models\ConfigModel;
@@ -39,7 +39,7 @@ class BunnyHelpers
 
     /**
      * @param \craft\elements\Asset|string                        $image
-     * @param \spacecatninja\bunnytransformer\models\BunnyProfile $profile
+     * @param \SpaceCatNinja\BunnyTransformer\Data\BunnyProfile $profile
      *
      * @return string
      * @throws \spacecatninja\imagerx\exceptions\ImagerException

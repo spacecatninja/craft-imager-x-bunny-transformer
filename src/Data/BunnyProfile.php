@@ -6,7 +6,7 @@
  * @copyright Copyright (c) 2024 André Elvan
  */
 
-namespace spacecatninja\bunnytransformer\models;
+namespace SpaceCatNinja\BunnyTransformer\Data;
 
 use craft\base\Model;
 

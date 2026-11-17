@@ -6,7 +6,7 @@
  * @copyright Copyright (c) 2024 André Elvan
  */
 
-namespace spacecatninja\bunnytransformer;
+namespace SpaceCatNinja\BunnyTransformer;
 
 use craft\base\Element;
 use craft\base\Model;
@@ -17,10 +17,10 @@ use craft\events\ReplaceAssetEvent;
 use craft\services\Assets;
 use craft\services\Elements;
 
-use spacecatninja\bunnytransformer\elementactions\BunnyPurgeElementAction;
-use spacecatninja\bunnytransformer\models\Settings;
-use spacecatninja\bunnytransformer\services\BunnyService;
-use spacecatninja\bunnytransformer\transformers\Bunny;
+use SpaceCatNinja\BunnyTransformer\ElementActions\BunnyPurgeElementAction;
+use SpaceCatNinja\BunnyTransformer\Settings;
+use SpaceCatNinja\BunnyTransformer\Services\BunnyService;
+use SpaceCatNinja\BunnyTransformer\Transformers\Bunny;
 use spacecatninja\imagerx\services\ImagerService;
 
 use yii\base\Event;

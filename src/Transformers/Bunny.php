@@ -6,16 +6,16 @@
  * @copyright Copyright (c) 2024 André Elvan
  */
 
-namespace spacecatninja\bunnytransformer\transformers;
+namespace SpaceCatNinja\BunnyTransformer\Transformers;
 
 use craft\base\Component;
 use craft\elements\Asset;
 
 use craft\helpers\UrlHelper;
-use spacecatninja\bunnytransformer\BunnyTransformer;
-use spacecatninja\bunnytransformer\helpers\BunnyHelpers;
-use spacecatninja\bunnytransformer\models\BunnyTransformedImageModel;
-use spacecatninja\bunnytransformer\models\Settings;
+use SpaceCatNinja\BunnyTransformer\BunnyTransformer;
+use SpaceCatNinja\BunnyTransformer\Support\BunnyHelpers;
+use SpaceCatNinja\BunnyTransformer\Data\BunnyTransformedImageModel;
+use SpaceCatNinja\BunnyTransformer\Settings;
 use spacecatninja\imagerx\services\ImagerService;
 use spacecatninja\imagerx\transformers\TransformerInterface;
 use spacecatninja\imagerx\exceptions\ImagerException;

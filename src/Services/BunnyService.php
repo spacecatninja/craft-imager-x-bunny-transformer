@@ -6,15 +6,15 @@
  * @copyright Copyright (c) 2024 André Elvan
  */
 
-namespace spacecatninja\bunnytransformer\services;
+namespace SpaceCatNinja\BunnyTransformer\Services;
 
 use Craft;
 use craft\base\Component;
 use craft\elements\Asset;
 
-use spacecatninja\bunnytransformer\helpers\BunnyHelpers;
-use spacecatninja\bunnytransformer\models\BunnyProfile;
-use spacecatninja\bunnytransformer\models\Settings;
+use SpaceCatNinja\BunnyTransformer\Support\BunnyHelpers;
+use SpaceCatNinja\BunnyTransformer\Data\BunnyProfile;
+use SpaceCatNinja\BunnyTransformer\Settings;
 use spacecatninja\imagerx\exceptions\ImagerException;
 
 class BunnyService extends Component
@@ -37,8 +37,8 @@ class BunnyService extends Component
     public static function getCanPurge(): bool
     {
         if (self::$canPurge === null) {
-            /** @var \spacecatninja\bunnytransformer\BunnyTransformer $plugin */
-            $plugin = \spacecatninja\bunnytransformer\BunnyTransformer::$plugin;
+            /** @var \SpaceCatNinja\BunnyTransformer\BunnyTransformer $plugin */
+            $plugin = \SpaceCatNinja\BunnyTransformer\BunnyTransformer::$plugin;
             /** @var Settings $settings */
             $settings = $plugin->getSettings();
 
@@ -120,8 +120,8 @@ class BunnyService extends Component
      */
     public function purgeAssetFromBunny(Asset $asset): void
     {
-        /** @var \spacecatninja\bunnytransformer\BunnyTransformer $plugin */
-        $plugin = \spacecatninja\bunnytransformer\BunnyTransformer::$plugin;
+        /** @var \SpaceCatNinja\BunnyTransformer\BunnyTransformer $plugin */
+        $plugin = \SpaceCatNinja\BunnyTransformer\BunnyTransformer::$plugin;
         /** @var Settings $settings */
         $settings = $plugin->getSettings();
 

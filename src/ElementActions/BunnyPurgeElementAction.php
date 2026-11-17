@@ -6,12 +6,12 @@
  * @copyright Copyright (c) 2024 André Elvan
  */
 
-namespace spacecatninja\bunnytransformer\elementactions;
+namespace SpaceCatNinja\BunnyTransformer\ElementActions;
 
 use Craft;
 use craft\base\ElementAction;
 use craft\elements\db\ElementQueryInterface;
-use spacecatninja\bunnytransformer\BunnyTransformer as Plugin;
+use SpaceCatNinja\BunnyTransformer\BunnyTransformer as Plugin;
 
 class BunnyPurgeElementAction extends ElementAction
 {

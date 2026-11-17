@@ -89,24 +89,34 @@ class BunnyHelpers
     }
 
     /**
-     * Gets the quality setting based on the extension.
+     * Gets the file extension of an image, in lowercase.
      *
-     * @param Asset|string $image
-     * @param array|null   $transform
+     * @param Asset|string $image The image asset, or a path or URL.
      *
      * @return string
      */
-    public static function getQualityFromExtension(Asset|string $image, ?array $transform = null): string
+    public static function getExtension(Asset|string $image): string
+    {
+        if (is_string($image)) {
+            return strtolower(pathinfo((string)parse_url($image, PHP_URL_PATH), PATHINFO_EXTENSION));
+        }
+
+        return strtolower($image->getExtension());
+    }
+
+    /**
+     * Gets the quality setting based on the extension, or the format the image is transformed to.
+     *
+     * @param string     $ext
+     * @param array|null $transform
+     *
+     * @return int
+     */
+    public static function getQualityFromExtension(string $ext, ?array $transform = null): int
     {
         $config = ImagerService::getConfig();
 
-        if (is_string($image)) {
-            $ext = pathinfo($image, PATHINFO_EXTENSION);
-        } else {
-            $ext = $image->getExtension();
-        }
-
-        switch ($ext) {
+        switch (strtolower($ext)) {
             case 'png':
                 $pngCompression = $config->getSetting('pngCompressionLevel', $transform);
 
@@ -120,6 +130,20 @@ class BunnyHelpers
         }
 
         return $config->getSetting('jpegQuality', $transform);
+    }
+
+    /**
+     * Returns the value of Bunny's `format` param for a format. Bunny calls JPEG `jpeg`, not `jpg`.
+     *
+     * @param string $format
+     *
+     * @return string
+     */
+    public static function prepFormat(string $format): string
+    {
+        $format = strtolower($format);
+
+        return $format === 'jpg' ? 'jpeg' : $format;
     }
 
     /**

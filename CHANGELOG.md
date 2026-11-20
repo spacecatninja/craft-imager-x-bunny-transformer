@@ -19,6 +19,7 @@
 - With `useCloudSourcePath`, the cloud source path is now the `root` of the volume's filesystem disk followed by the volume's subpath. Version 2 used the filesystem's subfolder, and left out the volume's subpath.
 - The "Purge from Bunny" element action now only purges the selected images that the current user can view.
 - `BunnyHelpers::getQualityFromExtension()` now takes a file extension or format instead of an image, and returns an integer.
+- Format `jpg` is now sent to Bunny as `jpeg`, the value Bunny documents.
 - `BunnyTransformedImageModel`'s constructor takes an optional `$upscale` argument, for whether Bunny may enlarge the image.
 
 ### Removed
@@ -26,7 +27,6 @@
 
 ### Fixed
 - Fixed `webpQuality`, `avifQuality` and `pngCompressionLevel` being ignored when a transform set `format`. The quality came from `jpegQuality`.
-- Fixed format `jpg` being sent to Bunny as `jpg`. Bunny's `format` parameter takes `jpeg`.
 - Fixed the quality for the source image's format not being found when its extension was uppercase, or its URL had a query string.
 - Fixed transforms larger than the source image. Bunny only enlarges images when its `upscaling` parameter is `resampling`, and the transformer didn't send it, but reported the enlarged size. It now sends `upscaling` from `allowUpscale` when a transform is larger than the source, and reports the size Bunny makes.
 - Fixed the size of images transformed with modes `letterbox`, `stretch` and `croponly`. Bunny fits them inside the size like mode `fit`, but the full size was reported.

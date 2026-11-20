@@ -127,6 +127,12 @@ class Bunny implements TransformerInterface
 
         $upscale = ($params['upscaling'] ?? 'off') === 'resampling';
 
+        // Without a width, Bunny resizes images to the pull zone's max width, by default 1600 on desktop and 800 on
+        // mobile, so send the width the image is expected to have
+        if (!isset($params['width']) && $hasSourceSize) {
+            $params['width'] = isset($params['height']) ? (int)ceil($params['height'] * $sourceWidth / $sourceHeight) : $sourceWidth;
+        }
+
         // Prune params and fix bools
         $params = array_intersect_key($params, array_flip(self::$validParams));
 

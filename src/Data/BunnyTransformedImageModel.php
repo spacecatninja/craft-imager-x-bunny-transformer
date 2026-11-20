@@ -44,24 +44,12 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
                 $transformH = (int)$transform['height'];
 
                 if ($mode === 'crop') {
-                    // The crop area is resized to the size, and only enlarged with upscaling
+                    // The crop area is fitted inside the size, and only enlarged with upscaling
                     [$cropWidth, $cropHeight] = BunnyHelpers::getCropSize($sourceWidth, $sourceHeight, $transformW, $transformH);
-
-                    if (!$upscale && ($transformW > $cropWidth || $transformH > $cropHeight)) {
-                        $this->width = $cropWidth;
-                        $this->height = $cropHeight;
-                    }
+                    [$this->width, $this->height] = BunnyHelpers::getFitSize($cropWidth, $cropHeight, $transformW, $transformH, $upscale);
                 } else {
                     // Bunny fits the image inside the size in every other mode, and only enlarges it with upscaling
-                    if ($sourceWidth / $sourceHeight > $transformW / $transformH) {
-                        $useW = $upscale ? $transformW : min($transformW, $sourceWidth);
-                        $this->width = $useW;
-                        $this->height = round($useW * ($sourceHeight / $sourceWidth));
-                    } else {
-                        $useH = $upscale ? $transformH : min($transformH, $sourceHeight);
-                        $this->width = round($useH * ($sourceWidth / $sourceHeight));
-                        $this->height = $useH;
-                    }
+                    [$this->width, $this->height] = BunnyHelpers::getFitSize($sourceWidth, $sourceHeight, $transformW, $transformH, $upscale);
                 }
             }
         } else if (isset($transform['width']) || isset($transform['height'])) {
@@ -111,10 +99,10 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
         $h = $transform['height'] ?? null;
 
         if ($w) {
-            return [$w, (int)round($w / $ratio)];
+            return [$w, BunnyHelpers::round($w / $ratio)];
         }
         if ($h) {
-            return [(int)round($h * $ratio), $h];
+            return [BunnyHelpers::round($h * $ratio), $h];
         }
 
         return [0, 0];

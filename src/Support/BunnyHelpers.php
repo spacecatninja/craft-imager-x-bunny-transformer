@@ -172,6 +172,9 @@ class BunnyHelpers
      * Returns the size of the area that a crop transform cuts from the source image: as much of the image as fits
      * the transform's aspect ratio.
      *
+     * The side that doesn't span the whole image is rounded down. Bunny resizes the area to fit inside the
+     * transform's size, so the other side then gets the transform's exact size.
+     *
      * @param int       $sourceWidth
      * @param int       $sourceHeight
      * @param int|float $width        The transform's width.
@@ -182,10 +185,10 @@ class BunnyHelpers
     public static function getCropSize(int $sourceWidth, int $sourceHeight, int|float $width, int|float $height): array
     {
         if ($width / $height > $sourceWidth / $sourceHeight) {
-            return [$sourceWidth, (int)ceil($sourceWidth / ($width / $height))];
+            return [$sourceWidth, max(1, (int)floor($sourceWidth / ($width / $height)))];
         }
 
-        return [(int)ceil($sourceHeight / ($height / $width)), $sourceHeight];
+        return [max(1, (int)floor($sourceHeight / ($height / $width))), $sourceHeight];
     }
 
     /**
@@ -225,6 +228,42 @@ class BunnyHelpers
         }
 
         return $height > $sourceHeight;
+    }
+
+    /**
+     * Returns the size Bunny resizes an image or crop area to, when fitting it inside a size. Bunny scales by the
+     * smaller of the two ratios, only enlarges with upscaling, and rounds halves to even.
+     *
+     * @param int       $width   The width of the image or crop area.
+     * @param int       $height  The height of the image or crop area.
+     * @param int|float $boxWidth
+     * @param int|float $boxHeight
+     * @param bool      $upscale
+     *
+     * @return int[] The width and height.
+     */
+    public static function getFitSize(int $width, int $height, int|float $boxWidth, int|float $boxHeight, bool $upscale): array
+    {
+        $scale = min($boxWidth / $width, $boxHeight / $height);
+
+        if (!$upscale) {
+            $scale = min($scale, 1);
+        }
+
+        return [self::round($width * $scale), self::round($height * $scale)];
+    }
+
+    /**
+     * Rounds a size like Bunny does, halves to even.
+     *
+     * @param int|float $value
+     *
+     * @return int
+     */
+    public static function round(int|float $value): int
+    {
+        // Avoids float noise like 562.50000000001 deciding a half
+        return (int)round(round($value, 6), 0, PHP_ROUND_HALF_EVEN);
     }
 
     /**

@@ -72,6 +72,8 @@ Some transform URLs change, so Bunny processes those images again the first time
 
 - A transform larger than the source image now sends Bunny's `upscaling` parameter, from Imager X's `allowUpscale` setting: `resampling` when it's on (Imager X's default), and `off` when it's off. Bunny only enlarges images with `resampling`, and version 2 didn't send it, so these images now get enlarged while `allowUpscale` is on. Set `allowUpscale` to `false` to keep images no larger than their source.
 - When the transformer can't read the source image's size (a path that isn't in the webroot, or an external URL), every transform with a size sends `upscaling=resampling` while `allowUpscale` is on, and crop transforms send `aspect_ratio` instead of an empty `crop`, so they're cropped around the center.
+- A transform with only a `height`, or no size, now also sends `width` when the transformer can read the source image's size. With Bunny's Smart Image Optimization on, Bunny resizes images requested without a width to the pull zone's max width.
+- The `crop` area is now rounded down instead of up, so it can be a pixel smaller than in version 2.
 - A transform with `format: 'jpg'` now sends `format=jpeg`, the value Bunny documents.
 - A transform with `format` set to `webp`, `avif` or `png` now gets its quality from `webpQuality`, `avifQuality` or `pngCompressionLevel`. Version 2 always used `jpegQuality` when `format` was set. A `quality` in a profile's `defaultParams` or the transform's `transformerParams` still wins.
 - Assets with `useCloudSourcePath`, see above.

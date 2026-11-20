@@ -57,6 +57,11 @@ setting: `resampling` when it's on, and `off` when it's off. When it can't read 
 `resampling` when `allowUpscale` is on. To override it, set `upscaling` in `transformerParams`. Bunny limits enlarged
 images to 24 megapixels, which the reported size of the transformed image doesn't take into account.
 
+With Bunny's Smart Image Optimization on, Bunny resizes images that are requested without a width to the pull zone's
+max width, by default 1600 pixels on desktop and 800 on mobile. To get the size Imager X asks for, the transformer
+always sends a width when it can read the size of the source image, also for transforms with only a `height`, or no
+size.
+
 For more information, check out the [Bunny.net Optimizer documentation](https://docs.bunny.net/docs/stream-image-processing).
 
 

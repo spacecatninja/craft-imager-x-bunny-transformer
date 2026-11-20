@@ -6,7 +6,7 @@
 > Version 3 requires Craft CMS 6, Imager X 7 and PHP 8.5, the config file moves to `config/craft/`, and there are breaking changes for code that uses the plugin's classes. See [UPGRADE.md](UPGRADE.md).
 
 ### Added
-- Added `BunnyHelpers::getExtension()`, `BunnyHelpers::prepFormat()`, `BunnyHelpers::getSourceSize()`, `BunnyHelpers::getCropSize()`, `BunnyHelpers::isEnlarging()` and `BunnyHelpers::getAspectRatioValue()`.
+- Added `BunnyHelpers::getExtension()`, `BunnyHelpers::prepFormat()`, `BunnyHelpers::getSourceSize()`, `BunnyHelpers::getCropSize()`, `BunnyHelpers::isEnlarging()`, `BunnyHelpers::getFitSize()`, `BunnyHelpers::round()` and `BunnyHelpers::getAspectRatioValue()`.
 - Added support for Bunny's `upscaling` parameter in `transformerParams`.
 
 ### Changed
@@ -31,6 +31,8 @@
 - Fixed transforms larger than the source image. Bunny only enlarges images when its `upscaling` parameter is `resampling`, and the transformer didn't send it, but reported the enlarged size. It now sends `upscaling` from `allowUpscale` when a transform is larger than the source, and reports the size Bunny makes.
 - Fixed the size of images transformed with modes `letterbox`, `stretch` and `croponly`. Bunny fits them inside the size like mode `fit`, but the full size was reported.
 - Fixed crop transforms of images whose size couldn't be read not being cropped. An empty `crop` parameter was sent, and they're now cropped around the center with Bunny's `aspect_ratio` parameter.
+- Fixed transforms with only a `height`, or no size, being resized to the pull zone's max width when Bunny's Smart Image Optimization was on, which also made their size depend on the device. The transformer now sends the width when it can read the source image's size.
+- Fixed crop transforms sometimes being a pixel narrower or shorter than the transform's size. The crop area is now rounded down, and sizes are rounded like Bunny rounds them.
 - Fixed the README saying only moved assets need `removeTransformsOnAssetFileops` to be auto-purged. Deleted assets need it too.
 
 ## 2.1.0 - 2026-03-21

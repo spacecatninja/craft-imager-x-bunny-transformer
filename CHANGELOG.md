@@ -1,6 +1,6 @@
 # Bunny.net transformer for Imager X Changelog
 
-## 2.2.0 - Unreleased
+## 2.2.0 - 2026-11-20
 
 > [!NOTE]
 > Some transform URLs change, so Bunny processes those images again the first time they're requested: transforms with `format` set to `webp`, `avif` or `png`, crop transforms of images whose size can't be read, transforms with only a `height` or no size, and some crops, whose crop area is a pixel smaller.

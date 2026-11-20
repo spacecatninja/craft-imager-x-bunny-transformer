@@ -1,5 +1,13 @@
 # Bunny.net transformer for Imager X Changelog
 
+## 2.2.0 - Unreleased
+
+### Added
+- Added `BunnyHelpers::getExtension()` and `BunnyHelpers::getQualityFromFormat()`.
+
+### Fixed
+- Fixed `webpQuality`, `avifQuality` and `pngCompressionLevel` being ignored when a transform set `format`, and the quality for the source image's format not being found when its extension was uppercase, or its URL had a query string.
+
 ## 2.1.0 - 2026-03-21
 
 ### Added

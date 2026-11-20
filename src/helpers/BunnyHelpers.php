@@ -90,25 +90,48 @@ class BunnyHelpers
     }
 
     /**
-     * Gets the quality setting based on the extension.
+     * Gets the file extension of an image, in lowercase.
+     *
+     * @param \craft\elements\Asset|string $image The image asset, or a path or URL.
+     *
+     * @return string
+     */
+    public static function getExtension(Asset|string $image): string
+    {
+        if (is_string($image)) {
+            return strtolower(pathinfo((string)parse_url($image, PHP_URL_PATH), PATHINFO_EXTENSION));
+        }
+
+        return strtolower($image->getExtension());
+    }
+
+    /**
+     * Gets the quality setting based on the extension of an image.
      *
      * @param \craft\elements\Asset|string $image
      * @param array|null                   $transform
      *
      * @return string
      */
-    public static function getQualityFromExtension(Asset|string $image, array $transform = null): string
+    public static function getQualityFromExtension(Asset|string $image, ?array $transform = null): string
     {
-        /** @var ConfigModel $settings */
-        $config = ImagerService::getConfig();
-        
-        if (is_string($image)) {
-            $ext = pathinfo($image, PATHINFO_EXTENSION);
-        } else {
-            $ext = $image->getExtension();
-        }
+        return (string)self::getQualityFromFormat(self::getExtension($image), $transform);
+    }
 
-        switch ($ext) {
+    /**
+     * Gets the quality setting based on a file extension, or the format an image is transformed to.
+     *
+     * @param string     $format
+     * @param array|null $transform
+     *
+     * @return int
+     */
+    public static function getQualityFromFormat(string $format, ?array $transform = null): int
+    {
+        /** @var ConfigModel $config */
+        $config = ImagerService::getConfig();
+
+        switch (strtolower($format)) {
             case 'png':
                 $pngCompression = $config->getSetting('pngCompressionLevel', $transform);
 

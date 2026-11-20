@@ -91,15 +91,11 @@ class Bunny extends Component implements TransformerInterface
         // Get applicable params
         $params = [...$profile->defaultParams, ...$transform, ...$transformerParams];
         
-        // get quality
+        // Get quality, from the format the image is transformed to, or the image's own
         if (!isset($params['quality'])) {
-            if (isset($params['format'])) {
-                $params['quality'] = BunnyHelpers::getQualityFromExtension($params['format'], $params);
-            } else {
-                $params['quality'] = BunnyHelpers::getQualityFromExtension($image, $params);
-            }
+            $params['quality'] = BunnyHelpers::getQualityFromFormat($params['format'] ?? BunnyHelpers::getExtension($image), $params);
         }
-        
+
         $mode = $params['mode'] ?? 'crop';
         
         // Bunny essentially only supports `fit` and `crop`

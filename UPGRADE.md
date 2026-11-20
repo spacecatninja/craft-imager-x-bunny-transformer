@@ -70,6 +70,8 @@ If your S3 or GCS disk's `root` matches the subfolder your Craft 5 filesystem ha
 
 Some transform URLs change, so Bunny processes those images again the first time they're requested:
 
+- A transform larger than the source image now sends Bunny's `upscaling` parameter, from Imager X's `allowUpscale` setting: `resampling` when it's on (Imager X's default), and `off` when it's off. Bunny only enlarges images with `resampling`, and version 2 didn't send it, so these images now get enlarged while `allowUpscale` is on. Set `allowUpscale` to `false` to keep images no larger than their source.
+- When the transformer can't read the source image's size (a path that isn't in the webroot, or an external URL), every transform with a size sends `upscaling=resampling` while `allowUpscale` is on, and crop transforms send `aspect_ratio` instead of an empty `crop`, so they're cropped around the center.
 - A transform with `format: 'jpg'` now sends `format=jpeg`, the value Bunny documents.
 - A transform with `format` set to `webp`, `avif` or `png` now gets its quality from `webpQuality`, `avifQuality` or `pngCompressionLevel`. Version 2 always used `jpegQuality` when `format` was set. A `quality` in a profile's `defaultParams` or the transform's `transformerParams` still wins.
 - Assets with `useCloudSourcePath`, see above.
@@ -88,6 +90,8 @@ The plugin moved from `spacecatninja\bunnytransformer` to the `SpaceCatNinja\Bun
 | `spacecatninja\bunnytransformer\helpers\BunnyHelpers` | `SpaceCatNinja\BunnyTransformer\Support\BunnyHelpers` |
 | `spacecatninja\bunnytransformer\transformers\Bunny` | `SpaceCatNinja\BunnyTransformer\Transformers\Bunny` |
 | `spacecatninja\bunnytransformer\elementactions\BunnyPurgeElementAction` | `SpaceCatNinja\BunnyTransformer\ElementActions\BunnyPurgeElementAction` |
+
+`BunnyTransformedImageModel`'s constructor takes a fourth argument, `$upscale`, for whether Bunny may enlarge the image. Without it, sizes are calculated as if the image is never enlarged, like Bunny does by default. Images transformed with any mode but `crop` are sized to fit inside the transform's size.
 
 `BunnyTransformedImageModel` extends Imager X 7's `SpaceCatNinja\ImagerX\Data\BaseTransformedImageModel`, and `BunnyProfile` extends Craft 6's `CraftCms\Cms\Component\Component`. The `Bunny` transformer and `BunnyService` no longer extend `craft\base\Component`, and the classes throw Imager X 7's `SpaceCatNinja\ImagerX\Exceptions\ImagerException`.
 

@@ -6,7 +6,8 @@
 > Version 3 requires Craft CMS 6, Imager X 7 and PHP 8.5, the config file moves to `config/craft/`, and there are breaking changes for code that uses the plugin's classes. See [UPGRADE.md](UPGRADE.md).
 
 ### Added
-- Added `BunnyHelpers::getExtension()` and `BunnyHelpers::prepFormat()`.
+- Added `BunnyHelpers::getExtension()`, `BunnyHelpers::prepFormat()`, `BunnyHelpers::getSourceSize()`, `BunnyHelpers::getCropSize()`, `BunnyHelpers::isEnlarging()` and `BunnyHelpers::getAspectRatioValue()`.
+- Added support for Bunny's `upscaling` parameter in `transformerParams`.
 
 ### Changed
 - The plugin now requires Craft CMS 6, Imager X 7.0.0-beta.2 or later, and PHP 8.5, and uses Craft 6's native plugin APIs. It doesn't need the Yii 2 adapter.
@@ -18,6 +19,7 @@
 - With `useCloudSourcePath`, the cloud source path is now the `root` of the volume's filesystem disk followed by the volume's subpath. Version 2 used the filesystem's subfolder, and left out the volume's subpath.
 - The "Purge from Bunny" element action now only purges the selected images that the current user can view.
 - `BunnyHelpers::getQualityFromExtension()` now takes a file extension or format instead of an image, and returns an integer.
+- `BunnyTransformedImageModel`'s constructor takes an optional `$upscale` argument, for whether Bunny may enlarge the image.
 
 ### Removed
 - Removed the `BunnyTransformer::$plugin` property and the plugin's `bunny` component.
@@ -26,6 +28,9 @@
 - Fixed `webpQuality`, `avifQuality` and `pngCompressionLevel` being ignored when a transform set `format`. The quality came from `jpegQuality`.
 - Fixed format `jpg` being sent to Bunny as `jpg`. Bunny's `format` parameter takes `jpeg`.
 - Fixed the quality for the source image's format not being found when its extension was uppercase, or its URL had a query string.
+- Fixed transforms larger than the source image. Bunny only enlarges images when its `upscaling` parameter is `resampling`, and the transformer didn't send it, but reported the enlarged size. It now sends `upscaling` from `allowUpscale` when a transform is larger than the source, and reports the size Bunny makes.
+- Fixed the size of images transformed with modes `letterbox`, `stretch` and `croponly`. Bunny fits them inside the size like mode `fit`, but the full size was reported.
+- Fixed crop transforms of images whose size couldn't be read not being cropped. An empty `crop` parameter was sent, and they're now cropped around the center with Bunny's `aspect_ratio` parameter.
 - Fixed the README saying only moved assets need `removeTransformsOnAssetFileops` to be auto-purged. Deleted assets need it too.
 
 ## 2.1.0 - 2026-03-21

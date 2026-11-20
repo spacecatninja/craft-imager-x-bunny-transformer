@@ -9,7 +9,7 @@
 namespace SpaceCatNinja\BunnyTransformer\Data;
 
 use CraftCms\Cms\Asset\Elements\Asset;
-use CraftCms\Cms\Support\Env;
+use SpaceCatNinja\BunnyTransformer\Support\BunnyHelpers;
 use SpaceCatNinja\ImagerX\Data\BaseTransformedImageModel;
 use SpaceCatNinja\ImagerX\Data\TransformedImageInterface;
 
@@ -19,8 +19,11 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
      * @param string|null       $imageUrl
      * @param Asset|string|null $source
      * @param array             $transform
+     * @param bool              $upscale   Whether Bunny may enlarge the image, which it does when its `upscaling`
+     *                                     param is `resampling`. Without it, sizes are calculated as if the image is
+     *                                     never enlarged, like Bunny does by default.
      */
-    public function __construct(?string $imageUrl = null, Asset|string|null $source = null, array $transform = [])
+    public function __construct(?string $imageUrl = null, Asset|string|null $source = null, array $transform = [], bool $upscale = false)
     {
         $this->source = $source;
 
@@ -34,19 +37,28 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
             $this->width = (int)$transform['width'];
             $this->height = (int)$transform['height'];
 
-            if ($source !== null && $mode === 'fit') {
-                [$sourceWidth, $sourceHeight] = $this->getSourceImageDimensions($source);
+            [$sourceWidth, $sourceHeight] = $source !== null ? $this->getSourceImageDimensions($source) : [0, 0];
 
+            if ($sourceWidth !== 0 && $sourceHeight !== 0) {
                 $transformW = (int)$transform['width'];
                 $transformH = (int)$transform['height'];
 
-                if ($sourceWidth !== 0 && $sourceHeight !== 0) {
+                if ($mode === 'crop') {
+                    // The crop area is resized to the size, and only enlarged with upscaling
+                    [$cropWidth, $cropHeight] = BunnyHelpers::getCropSize($sourceWidth, $sourceHeight, $transformW, $transformH);
+
+                    if (!$upscale && ($transformW > $cropWidth || $transformH > $cropHeight)) {
+                        $this->width = $cropWidth;
+                        $this->height = $cropHeight;
+                    }
+                } else {
+                    // Bunny fits the image inside the size in every other mode, and only enlarges it with upscaling
                     if ($sourceWidth / $sourceHeight > $transformW / $transformH) {
-                        $useW = min($transformW, $sourceWidth);
+                        $useW = $upscale ? $transformW : min($transformW, $sourceWidth);
                         $this->width = $useW;
                         $this->height = round($useW * ($sourceHeight / $sourceWidth));
                     } else {
-                        $useH = min($transformH, $sourceHeight);
+                        $useH = $upscale ? $transformH : min($transformH, $sourceHeight);
                         $this->width = round($useH * ($sourceWidth / $sourceHeight));
                         $this->height = $useH;
                     }
@@ -56,6 +68,11 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
             if ($source !== null) {
                 [$sourceWidth, $sourceHeight] = $this->getSourceImageDimensions($source);
                 [$w, $h] = $this->calculateTargetSize($transform, $sourceWidth ?: 1, $sourceHeight ?: 1);
+
+                // Bunny only enlarges the image with upscaling
+                if (!$upscale && $sourceWidth !== 0 && $sourceHeight !== 0 && ($w > $sourceWidth || $h > $sourceHeight)) {
+                    [$w, $h] = [$sourceWidth, $sourceHeight];
+                }
 
                 $this->width = $w;
                 $this->height = $h;
@@ -76,21 +93,7 @@ class BunnyTransformedImageModel extends BaseTransformedImageModel implements Tr
      */
     protected function getSourceImageDimensions(Asset|string $source): array
     {
-        $imageWidth = 0;
-        $imageHeight = 0;
-
-        if (is_string($source)) {
-            $imageInfo = @getimagesize(Env::parse('@webroot/'.ltrim($source, '/')));
-
-            if (\is_array($imageInfo) && $imageInfo[0] !== '' && $imageInfo[1] !== '') {
-                [$imageWidth, $imageHeight] = $imageInfo;
-            }
-        } else {
-            $imageWidth = (int)$source->getWidth();
-            $imageHeight = (int)$source->getHeight();
-        }
-
-        return [$imageWidth, $imageHeight];
+        return BunnyHelpers::getSourceSize($source);
     }
 
     /**

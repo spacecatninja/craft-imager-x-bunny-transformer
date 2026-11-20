@@ -14,6 +14,7 @@ use SpaceCatNinja\BunnyTransformer\Data\BunnyTransformedImageModel;
 use SpaceCatNinja\BunnyTransformer\Settings;
 use SpaceCatNinja\BunnyTransformer\Support\BunnyHelpers;
 use SpaceCatNinja\ImagerX\Exceptions\ImagerException;
+use SpaceCatNinja\ImagerX\Services\ImagerService;
 use SpaceCatNinja\ImagerX\Transformers\TransformerInterface;
 
 class Bunny implements TransformerInterface
@@ -38,6 +39,7 @@ class Bunny implements TransformerInterface
         'sepia',
         'class',
         'format',
+        'upscaling',
     ];
 
     /**
@@ -96,11 +98,34 @@ class Bunny implements TransformerInterface
         }
 
         $mode = $params['mode'] ?? 'crop';
+        [$sourceWidth, $sourceHeight] = BunnyHelpers::getSourceSize($image);
+        $hasSourceSize = $sourceWidth !== 0 && $sourceHeight !== 0;
 
-        // Bunny essentially only supports `fit` and `crop`
+        // Bunny essentially only supports `crop`. Every other mode fits the image inside the size, like `fit`.
         if (isset($params['width'], $params['height']) && $mode === 'crop') {
-            $params['crop'] = BunnyHelpers::getCropParamValue($image, $params);
+            if ($hasSourceSize) {
+                $params['crop'] = BunnyHelpers::getCropParamValue($image, $params);
+            } elseif (!isset($params['aspect_ratio'])) {
+                // Without the source's size, the crop area can't be calculated, so crop to the ratio around the center
+                $params['aspect_ratio'] = BunnyHelpers::getAspectRatioValue($params['width'], $params['height']);
+            }
         }
+
+        // Bunny only enlarges images when `upscaling` is `resampling`. Unless it's set, it's set from `allowUpscale`
+        // when the transform asks for a larger image than the source, or when the source's size is unknown.
+        if (!isset($params['upscaling']) && (isset($params['width']) || isset($params['height']))) {
+            $allowUpscale = (bool)ImagerService::getConfig()->getSetting('allowUpscale', $transform);
+
+            if ($hasSourceSize) {
+                if (BunnyHelpers::isEnlarging($sourceWidth, $sourceHeight, $params)) {
+                    $params['upscaling'] = $allowUpscale ? 'resampling' : 'off';
+                }
+            } elseif ($allowUpscale) {
+                $params['upscaling'] = 'resampling';
+            }
+        }
+
+        $upscale = ($params['upscaling'] ?? 'off') === 'resampling';
 
         // Prune params and fix bools
         $params = array_intersect_key($params, array_flip(self::$validParams));
@@ -114,7 +139,7 @@ class Bunny implements TransformerInterface
         // Create the final URL
         $url = Url::url($url, $params);
 
-        return new BunnyTransformedImageModel($url, $image, $transform);
+        return new BunnyTransformedImageModel($url, $image, $transform, $upscale);
     }
 
 }

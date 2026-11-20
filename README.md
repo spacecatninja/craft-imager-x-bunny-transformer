@@ -44,6 +44,22 @@ options can be passed directly to Bunny using the `transformerParams` transform 
 ) %}
 ```   
 
+Mode `crop` crops the image around its focal point, or `position`, and every other mode (`fit`, `letterbox`, `stretch`
+and `croponly`) fits the image inside the size, like `fit`. When the transformer can't read the size of the source image,
+for instance a path that isn't in the webroot, or an external URL, `crop` crops around the center with Bunny's
+`aspect_ratio` parameter instead.
+
+Bunny doesn't enlarge images beyond their original size unless its `upscaling` parameter is `resampling`. The
+transformer doesn't set it from Imager X's `allowUpscale` setting, so a transform larger than the source image gets the
+source's size. To enlarge images, set `upscaling: 'resampling'` in `transformerParams`, or in a profile's
+`defaultParams` (also do that if your pull zone enlarges images by default, so the reported sizes are right). Bunny
+limits enlarged images to 24 megapixels, which the reported size of the transformed image doesn't take into account.
+
+With Bunny's Smart Image Optimization on, Bunny resizes images that are requested without a width to the pull zone's
+max width, by default 1600 pixels on desktop and 800 on mobile. To get the size Imager X asks for, the transformer
+always sends a width when it can read the size of the source image, also for transforms with only a `height`, or no
+size.
+
 For more information, check out the [Bunny.net Optimizer documentation](https://docs.bunny.net/docs/stream-image-processing).
 
 

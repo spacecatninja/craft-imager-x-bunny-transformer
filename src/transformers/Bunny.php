@@ -42,6 +42,7 @@ class Bunny extends Component implements TransformerInterface
         'sepia',
         'class',
         'format',
+        'upscaling',
     ];
     
     /**
@@ -97,12 +98,28 @@ class Bunny extends Component implements TransformerInterface
         }
 
         $mode = $params['mode'] ?? 'crop';
-        
-        // Bunny essentially only supports `fit` and `crop`
+        [$sourceWidth, $sourceHeight] = BunnyHelpers::getSourceSize($image);
+        $hasSourceSize = $sourceWidth !== 0 && $sourceHeight !== 0;
+
+        // Bunny essentially only supports `crop`. Every other mode fits the image inside the size, like `fit`.
         if (isset($params['width'], $params['height']) && $mode === 'crop') {
-            $params['crop'] = BunnyHelpers::getCropParamValue($image, $params);
+            if ($hasSourceSize) {
+                $params['crop'] = BunnyHelpers::getCropParamValue($image, $params);
+            } elseif (!isset($params['aspect_ratio'])) {
+                // Without the source's size, the crop area can't be calculated, so crop to the ratio around the center
+                $params['aspect_ratio'] = BunnyHelpers::getAspectRatioValue($params['width'], $params['height']);
+            }
         }
-        
+
+        // Bunny only enlarges images when `upscaling` is `resampling`, which can be set in transformerParams
+        $upscale = ($params['upscaling'] ?? 'off') === 'resampling';
+
+        // Without a width, Bunny resizes images to the pull zone's max width when Smart Image Optimization is on, by
+        // default 1600 on desktop and 800 on mobile, so send the width the image is expected to have
+        if (!isset($params['width']) && $hasSourceSize) {
+            $params['width'] = isset($params['height']) ? (int)ceil($params['height'] * $sourceWidth / $sourceHeight) : $sourceWidth;
+        }
+
         // Prune params and fix bools
         $params = array_intersect_key($params, array_flip(self::$validParams));
         
@@ -115,7 +132,7 @@ class Bunny extends Component implements TransformerInterface
         // Create the final URL
         $url = UrlHelper::url($url, $params);
         
-        return new BunnyTransformedImageModel($url, $image, $transform);
+        return new BunnyTransformedImageModel($url, $image, $transform, $upscale);
     }
     
 }

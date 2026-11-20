@@ -148,6 +148,108 @@ class BunnyHelpers
     }
 
     /**
+     * Returns the size of an image, or zeros if it can't be read. Paths are looked up in the webroot.
+     *
+     * @param \craft\elements\Asset|string $image
+     *
+     * @return int[] The width and height.
+     */
+    public static function getSourceSize(Asset|string $image): array
+    {
+        if (is_string($image)) {
+            $imageInfo = @getimagesize(App::parseEnv('@webroot/'.ltrim($image, '/')));
+
+            if (\is_array($imageInfo) && $imageInfo[0] !== '' && $imageInfo[1] !== '') {
+                return [(int)$imageInfo[0], (int)$imageInfo[1]];
+            }
+
+            return [0, 0];
+        }
+
+        return [(int)$image->getWidth(), (int)$image->getHeight()];
+    }
+
+    /**
+     * Returns the size of the area that a crop transform cuts from the source image: as much of the image as fits
+     * the transform's aspect ratio.
+     *
+     * The side that doesn't span the whole image is rounded down. Bunny resizes the area to fit inside the
+     * transform's size, so the other side then gets the transform's exact size.
+     *
+     * @param int       $sourceWidth
+     * @param int       $sourceHeight
+     * @param int|float $width        The transform's width.
+     * @param int|float $height       The transform's height.
+     *
+     * @return int[] The width and height.
+     */
+    public static function getCropSize(int $sourceWidth, int $sourceHeight, int|float $width, int|float $height): array
+    {
+        if ($width / $height > $sourceWidth / $sourceHeight) {
+            return [$sourceWidth, max(1, (int)floor($sourceWidth / ($width / $height)))];
+        }
+
+        return [max(1, (int)floor($sourceHeight / ($height / $width))), $sourceHeight];
+    }
+
+    /**
+     * Returns the size Bunny resizes an image or crop area to, when fitting it inside a size. Bunny scales by the
+     * smaller of the two ratios, only enlarges with upscaling, and rounds halves to even.
+     *
+     * @param int       $width   The width of the image or crop area.
+     * @param int       $height  The height of the image or crop area.
+     * @param int|float $boxWidth
+     * @param int|float $boxHeight
+     * @param bool      $upscale
+     *
+     * @return int[] The width and height.
+     */
+    public static function getFitSize(int $width, int $height, int|float $boxWidth, int|float $boxHeight, bool $upscale): array
+    {
+        $scale = min($boxWidth / $width, $boxHeight / $height);
+
+        if (!$upscale) {
+            $scale = min($scale, 1);
+        }
+
+        return [self::round($width * $scale), self::round($height * $scale)];
+    }
+
+    /**
+     * Rounds a size like Bunny does, halves to even.
+     *
+     * @param int|float $value
+     *
+     * @return int
+     */
+    public static function round(int|float $value): int
+    {
+        // Avoids float noise like 562.50000000001 deciding a half
+        return (int)round(round($value, 6), 0, PHP_ROUND_HALF_EVEN);
+    }
+
+    /**
+     * Returns the value of Bunny's `aspect_ratio` param for a size, as the smallest whole numbers, e.g. `3:2`.
+     *
+     * @param int|float $width
+     * @param int|float $height
+     *
+     * @return string
+     */
+    public static function getAspectRatioValue(int|float $width, int|float $height): string
+    {
+        $width = (int)round($width);
+        $height = (int)round($height);
+        [$a, $b] = [$width, $height];
+
+        while ($b !== 0) {
+            [$a, $b] = [$b, $a % $b];
+        }
+
+        return $a > 0 ? ($width / $a) . ':' . ($height / $a) : "$width:$height";
+    }
+
+    /**
      * Creates the crop parameter string
      *
      * @param \craft\elements\Asset|string $image
@@ -157,26 +259,11 @@ class BunnyHelpers
      */
     public static function getCropParamValue(Asset|string $image, array $params): string
     {
-        $imageWidth = 0;
-        $imageHeight = 0;
-
-        if (is_string($image)) {
-            $imageInfo = @getimagesize(App::parseEnv('@webroot/'.ltrim($image, '/')));
-
-            if (\is_array($imageInfo) && $imageInfo[0] !== '' && $imageInfo[1] !== '') {
-                [$imageWidth, $imageHeight] = $imageInfo;
-            }
-        } else {
-            $imageWidth = $image->width;
-            $imageHeight = $image->height;
-        }
+        [$imageWidth, $imageHeight] = self::getSourceSize($image);
 
         if ($imageWidth === 0 || $imageHeight === 0) {
             return '';
         }
-
-        $transformRatio = $params['width'] / $params['height'];
-        $assetRatio = $imageWidth / $imageHeight;
 
         if (isset($params['position'])) {
             $focalPoint = explode(' ', $params['position']);
@@ -192,13 +279,7 @@ class BunnyHelpers
             $top = $image->getFocalPoint()['y'] * 100;
         }
 
-        if ($transformRatio > $assetRatio) {
-            $cropWidth = $imageWidth;
-            $cropHeight = ceil($imageWidth / ($params['width'] / $params['height']));
-        } else {
-            $cropWidth = ceil($imageHeight / ($params['height'] / $params['width']));
-            $cropHeight = $imageHeight;
-        }
+        [$cropWidth, $cropHeight] = self::getCropSize($imageWidth, $imageHeight, $params['width'], $params['height']);
 
         // Calculate absolute pixels for the original focal point x and y
         $focalX = floor($imageWidth * ($left / 100));
